@@ -1,5 +1,5 @@
 # Stage 1 - Build the frontend
-FROM node:16-alpine3.17 AS node-build-env
+FROM node:18-alpine3.18 AS node-build-env
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ARG BUILDPLATFORM
@@ -8,7 +8,7 @@ ENV BUILDPLATFORM=${BUILDPLATFORM:-linux/amd64}
 RUN mkdir /appclient
 WORKDIR /appclient
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git python3 py3-pip make g++
 
 RUN \
    echo "**** Cloning Source Code ****" && \
@@ -21,7 +21,7 @@ RUN \
 RUN ls -FCla /appclient/root
 
 # Stage 2 - Build the backend
-FROM mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim-amd64 AS dotnet-build-env
+FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim-amd64 AS dotnet-build-env
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ARG BUILDPLATFORM
@@ -47,7 +47,7 @@ RUN \
    fi
 
 # Stage 3 - Build runtime image
-FROM ghcr.io/linuxserver/baseimage-alpine:3.17
+FROM ghcr.io/linuxserver/baseimage-alpine:3.18
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ARG BUILDPLATFORM
