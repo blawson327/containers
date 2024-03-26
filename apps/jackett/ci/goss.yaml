@@ -6,9 +6,8 @@ process:
 port:
   tcp6:9117:
     listening: true
-
-http:
-  http://localhost:9117/UI/Login:
-    status: 200
-    body:
-    - '<title>Jackett</title>'
+# http:
+#   http://localhost:9117/UI/Login:
+#     status: 200
+#     body:
+#     - '<title>Jackett</title>'
