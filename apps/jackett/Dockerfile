@@ -7,6 +7,9 @@ ARG VERSION
 # https://github.com/Jackett/Jackett#home-directory-1
 ENV XDG_CONFIG_HOME=/config
 
+ENV UMASK="0002" \
+    TZ="Etc/UTC"
+
 USER root
 
 RUN echo "TARGETPLATFORM is ${TARGETPLATFORM}"
@@ -40,11 +43,10 @@ RUN \
     /tmp/* \
     /var/lib/apt/lists/* \
     /var/tmp/ \
-  && chown -R kah:kah /app \
-  && chmod -R u=rwX,go=rX /app \
-  && printf "umask %d" "022" >> /etc/bash.bashrc
+  && chmod -R 755 /app \
+  && printf "umask %d" "${UMASK}" >> /etc/bash.bashrc
 
-USER kah
+USER nobody:nogroup
 
 EXPOSE 9117
 
