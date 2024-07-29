@@ -12,12 +12,6 @@ USER root
 
 # hadolint ignore=DL3008,DL3015,SC2086
 RUN \
-  apt-get -qq update \
-  && \
-  apt-get -qq install -y \
-    libicu72 \
-    libssl3 \
-  && \
   case "${TARGETPLATFORM}" in \
     'linux/amd64') export ARCH='AMDx64' ;; \
     'linux/arm64') export ARCH='ARM64' ;; \
