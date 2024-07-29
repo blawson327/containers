@@ -1,3 +1,4 @@
+ARG VERSION
 FROM docker.io/library/alpine:3.20
 
 ARG TARGETPLATFORM
@@ -5,35 +6,53 @@ ARG VERSION
 ARG CHANNEL
 
 ENV \
-    READARR__INSTANCE_NAME="Readarr" \
-    READARR__BRANCH="${CHANNEL}" \
-    READARR__PORT="8787" \
-    READARR__ANALYTICS_ENABLED="False"
+    COMPlus_EnableDiagnostics="0" \
+    READARR__UPDATE__BRANCH="${CHANNEL}"
 
-#hadolint ignore=DL3018
-RUN apk add --no-cache ca-certificates icu-libs libintl sqlite-libs xmlstarlet
-#hadolint ignore=DL3059
+ENV UMASK="0002" \
+    TZ="Etc/UTC"
+
+USER root
+WORKDIR /app
+
+#hadolint ignore=DL3018,DL3059
 RUN \
+    apk add --no-cache \
+        bash \
+        ca-certificates \
+        catatonit \
+        curl \
+        icu-libs \
+        jq \
+        libintl \
+        nano \
+        sqlite-libs \
+        tzdata \
+    && \
     case "${TARGETPLATFORM}" in \
         'linux/amd64') export ARCH='x64' ;; \
         'linux/arm64') export ARCH='arm64' ;; \
     esac \
     && \
-    curl -fsSL "https://readarr.servarr.com/v1/update/${READARR__BRANCH}/updatefile?version=${VERSION}&os=linuxmusl&runtime=netcore&arch=${ARCH}" \
-        | tar xzf - -C /app --strip-components=1 \
+    mkdir -p /app/bin \
     && \
-    rm -rf \
-        /app/Readarr.Update \
+    curl -fsSL "https://readarr.servarr.com/v1/update/${READARR__UPDATE__BRANCH}/updatefile?version=${VERSION}&os=linuxmusl&runtime=netcore&arch=${ARCH}" \
+        | tar xzf - -C /app/bin --strip-components=1 \
     && \
-    printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[onedr0p](https://github.com/onedr0p)\n" "${READARR__BRANCH}" "${VERSION}" > /app/package_info \
+    rm -rf /app/bin/Readarr.Update \
+    && \
+    printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[onedr0p](https://github.com/onedr0p)\n" "${READARR__UPDATE__BRANCH}" "${VERSION}" > /app/package_info \
     && chown -R root:root /app \
     && chmod -R 755 /app \
     && rm -rf /tmp/*
 
-USER kah
-
-COPY ./apps/readarr/config.xml.tmpl /app/config.xml.tmpl
 COPY ./apps/readarr/entrypoint.sh /entrypoint.sh
+
+USER nobody:nogroup
+WORKDIR /config
+VOLUME ["/config"]
+
+ENTRYPOINT ["/usr/bin/catatonit", "--"]
 CMD ["/entrypoint.sh"]
 
 LABEL org.opencontainers.image.source="https://github.com/Readarr/Readarr"
