@@ -1,4 +1,4 @@
-FROM ghcr.io/k8s-at-home/ubuntu-focal:rolling@sha256:c001f386f4860b3353dcb40dceafa4274bd7b77c8aa2def745fec26d58c8a0fd
+FROM docker.io/library/ubuntu:24.04
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
