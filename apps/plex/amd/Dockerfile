@@ -58,7 +58,7 @@ RUN apk add  xf86-video-amdgpu linux-firmware-amdgpu --no-cache --update-cache \
  && cp -a /lib/libz*.so* "/output/usr/lib"
 
 
-FROM ghcr.io/onedr0p/ubuntu:jammy-20221101@sha256:bf2d52a2e698ab9c2e0a1af7f7b70b9806091c5ca21d9f1a4d1c3809f41e5e93
+FROM docker.io/library/ubuntu:24.04
 
 ARG TARGETPLATFORM
 ARG VERSION
