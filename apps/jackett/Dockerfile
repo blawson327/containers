@@ -9,6 +9,8 @@ ENV XDG_CONFIG_HOME=/config
 
 USER root
 
+RUN echo "TARGETPLATFORM is ${TARGETPLATFORM}"
+RUN echo "VERSION is ${VERSION}"
 # hadolint ignore=DL3008,DL3015,SC2086
 RUN \
   apt-get -qq update \
@@ -21,6 +23,8 @@ RUN \
     'linux/arm64') export ARCH='ARM64' ;; \
     'linux/arm/v7') export ARCH='ARM32' ;; \
   esac \
+  && \
+  mkdir -p /app \
   && \
   curl -fsSL -o /tmp/jackett.tar.gz \
     "https://github.com/Jackett/Jackett/releases/download/v${VERSION}/Jackett.Binaries.Linux${ARCH}.tar.gz" \
