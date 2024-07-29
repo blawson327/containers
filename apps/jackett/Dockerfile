@@ -1,7 +1,6 @@
 FROM docker.io/library/ubuntu:24.04
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 
 # Sets Jackett config directory
@@ -39,7 +38,7 @@ RUN \
     /var/tmp/ \
   && chown -R kah:kah /app \
   && chmod -R u=rwX,go=rX /app \
-  && printf "umask %d" "${UMASK}" >> /etc/bash.bashrc
+  && printf "umask %d" "022" >> /etc/bash.bashrc
 
 USER kah
 
