@@ -47,7 +47,7 @@ RUN \
     /var/lib/apt/lists/* \
     /var/tmp/ \
   && chmod -R 755 /app \
-  && chmod -R 755 /config \
+  && chmod -R 777 /config \
   && printf "umask %d" "${UMASK}" >> /etc/bash.bashrc
 
 USER nobody:nogroup
