@@ -20,7 +20,6 @@ RUN \
   && \
   apt-get -qq install -y \
     curl \
-    libicu \
   && \
   case "${TARGETPLATFORM}" in \
     'linux/amd64') export ARCH='AMDx64' ;; \
