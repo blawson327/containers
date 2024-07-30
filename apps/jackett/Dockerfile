@@ -30,6 +30,8 @@ RUN \
   && \
   mkdir -p /app \
   && \
+  mkdir -p /config \
+  && \
   curl -fsSL -o /tmp/jackett.tar.gz \
     "https://github.com/Jackett/Jackett/releases/download/v${VERSION}/Jackett.Binaries.Linux${ARCH}.tar.gz" \
   && tar ixzf /tmp/jackett.tar.gz -C /app --strip-components 1 \
@@ -45,6 +47,7 @@ RUN \
     /var/lib/apt/lists/* \
     /var/tmp/ \
   && chmod -R 755 /app \
+  && chmod -R 755 /config \
   && printf "umask %d" "${UMASK}" >> /etc/bash.bashrc
 
 USER nobody:nogroup
