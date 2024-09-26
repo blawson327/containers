@@ -96,5 +96,6 @@ COPY --from=node-build-env /appclient/root/ /
 EXPOSE 6500
 VOLUME [ "/data" ]
 
-# Check Status
-HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD curl --fail http://localhost:6500 || exit 1
+
+ENTRYPOINT ["dotnet", "/app/RdtClient.Web.dll"]
+
