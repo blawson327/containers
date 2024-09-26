@@ -49,7 +49,7 @@ RUN \
    fi
 
 # Stage 3 - Build runtime image
-FROM alpine:3.18
+FROM alpine:3.20
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ARG BUILDPLATFORM
