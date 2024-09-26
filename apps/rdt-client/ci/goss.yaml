@@ -1,0 +1,6 @@
+---
+command:
+  always_succeed:
+    exit-status: 0
+    stdout:
+      - "This test will always pass"
