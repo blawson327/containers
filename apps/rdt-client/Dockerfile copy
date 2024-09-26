@@ -21,7 +21,7 @@ RUN \
 RUN ls -FCla /appclient/root
 
 # Stage 2 - Build the backend
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS dotnet-build-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim-amd64 AS dotnet-build-env
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ARG BUILDPLATFORM
@@ -29,8 +29,6 @@ ENV BUILDPLATFORM=${BUILDPLATFORM:-linux/amd64}
 
 RUN mkdir /appserver
 WORKDIR /appserver
-
-RUN apk add --no-cache git
 
 RUN \
    echo "**** Cloning Source Code ****" && \
@@ -49,7 +47,7 @@ RUN \
    fi
 
 # Stage 3 - Build runtime image
-FROM alpine:3.18
+FROM ghcr.io/linuxserver/baseimage-alpine:3.18
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ARG BUILDPLATFORM
@@ -58,20 +56,24 @@ ENV BUILDPLATFORM=${BUILDPLATFORM:-linux/amd64}
 # set version label
 ARG BUILD_DATE
 ARG VERSION
-LABEL build_version="Custom version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL build_version="Linuxserver.io extended version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="ravensorb"
 
 # set environment variables
+ARG DEBIAN_FRONTEND="noninteractive"
 ENV XDG_CONFIG_HOME="/config/xdg"
 ENV RDTCLIENT_BRANCH="main"
 
-# Install dependencies
 RUN \
-    apk add --no-cache bash icu-libs krb5-libs libgcc libintl libssl3 libstdc++ zlib curl
+    mkdir -p /data/downloads /data/db || true && \
+    echo "**** Updating package information ****" && \
+    apk update && \
+    echo "**** Install pre-reqs ****" && \
+    apk add bash icu-libs krb5-libs libgcc libintl libssl1.1 libstdc++ zlib && \
+    echo "**** Installing dotnet ****" && \
+	mkdir -p /usr/share/dotnet
 
-# Install .NET runtime
 RUN \
-   mkdir -p /usr/share/dotnet && \
    if [ "$TARGETPLATFORM" = "linux/arm/v7" ] ; then \
       wget https://download.visualstudio.microsoft.com/download/pr/c3bf3103-efdb-42e0-af55-bbf861a4215b/dc22eda8877933b8c6569e3823f18d21/aspnetcore-runtime-8.0.0-linux-musl-arm64.tar.gz && \
       tar zxf aspnetcore-runtime-8.0.0-linux-musl-arm64.tar.gz -C /usr/share/dotnet ; \
@@ -82,8 +84,15 @@ RUN \
       wget https://download.visualstudio.microsoft.com/download/pr/7aa33fc7-07fe-48c2-8e44-a4bfb4928535/3b96ec50970eee414895ef3a5b188bcd/aspnetcore-runtime-8.0.0-linux-musl-x64.tar.gz && \
       tar zxf aspnetcore-runtime-8.0.0-linux-musl-x64.tar.gz -C /usr/share/dotnet ; \
    fi
+	
+RUN \
+    echo "**** Setting permissions ****" && \
+    chown -R abc:abc /data && \
+    rm -rf \
+        /tmp/* \
+        /var/cache/apk/* \
+        /var/tmp/* || true
 
-# Set environment variables for the app
 ENV PATH "$PATH:/usr/share/dotnet"
 
 # Copy files for app
@@ -97,4 +106,4 @@ EXPOSE 6500
 VOLUME [ "/data" ]
 
 # Check Status
-HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD curl --fail http://localhost:6500 || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD curl --fail http://localhost:6500 || exit 
