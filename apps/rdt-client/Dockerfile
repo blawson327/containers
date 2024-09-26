@@ -24,7 +24,8 @@ RUN \
    git clone https://github.com/rogerfar/rdt-client.git . && \
    cd server && \
    dotnet restore --no-cache RdtClient.sln && \
-   dotnet publish --no-restore -c Release -o out
+   dotnet publish --no-restore -c Release -o out && \
+   ls -la /appserver/out  # Add this debug step
 
 # Stage 3 - Build runtime image
 FROM alpine:3.18
@@ -41,17 +42,22 @@ ENV PATH "$PATH:/usr/share/dotnet"
 # Create the /config directory
 RUN mkdir -p /config/downloads /config/db
 
-WORKDIR /app
-COPY --from=dotnet-build-env /appserver/out /app
-COPY --from=node-build-env /appclient/client/out ./wwwroot
+WORKDIR /config/app
 
-# Move app and db files to /config
-RUN mv /app /config/app && \
-    mv /data/db /config/db && \
-    chown -R 1000:1000 /config && \
-    chmod -R 770 /config
+# Copy backend output
+COPY --from=dotnet-build-env /appserver/out /config/app
 
-USER nobody:nogroup
+# Copy frontend output
+COPY --from=node-build-env /appclient/client/out /config/app/wwwroot
+
+# Ensure the permissions are correct
+RUN chown -R 1000:1000 /config && chmod -R 770 /config
+
+# Add a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Switch to non-root user
+USER appuser
 
 # Use /config/app for the .dll entry point
 ENTRYPOINT ["dotnet", "/config/app/RdtClient.dll"]
