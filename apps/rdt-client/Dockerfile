@@ -41,24 +41,24 @@ RUN mkdir -p /usr/share/dotnet && \
 
 ENV PATH "$PATH:/usr/share/dotnet"
 
-# Create the /config and /data directories
-RUN mkdir -p /config/downloads /config/db /data && \
-    chown -R nobody:nogroup /config /data
+# Create the /config directory for the PVC and /app for the application
+RUN mkdir -p /config/data /app /data && \
+    chown -R nobody:nogroup /config /app /data
 
-WORKDIR /config/app
+WORKDIR /app
 
 # Copy backend output
-COPY --from=dotnet-build-env /appserver/out/web /config/app
-COPY --from=dotnet-build-env /appserver/out/service /config/app
-COPY --from=dotnet-build-env /appserver/out/data /config/app
+COPY --from=dotnet-build-env /appserver/out/web /app
+COPY --from=dotnet-build-env /appserver/out/service /app
+COPY --from=dotnet-build-env /appserver/out/data /app
 
 # Copy frontend output
-COPY --from=node-build-env /appclient/client/out /config/app/wwwroot
+COPY --from=node-build-env /appclient/client/out /app/wwwroot
 
 USER nobody:nogroup
 
-# Use /config/app for the .dll entry point
-ENTRYPOINT ["dotnet", "/config/app/RdtClient.Web.dll"]
+# Use /app for the .dll entry point
+ENTRYPOINT ["dotnet", "/app/RdtClient.Web.dll"]
 
-# ports and volumes
+# Expose the port used by the application
 EXPOSE 6500
