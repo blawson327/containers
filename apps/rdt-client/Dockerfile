@@ -1,5 +1,5 @@
 # Stage 1 - Build the frontend
-FROM node:18-alpine3.18 AS node-build-env
+FROM node:18-alpine3.20 AS node-build-env
 
 RUN mkdir /appclient
 WORKDIR /appclient
@@ -24,11 +24,13 @@ RUN \
    git clone https://github.com/rogerfar/rdt-client.git . && \
    cd server && \
    dotnet restore --no-cache RdtClient.sln && \
-   dotnet publish --no-restore -c Release -o out && \
-   ls -la /appserver/out  # Add this debug step
+   dotnet publish RdtClient.Web/RdtClient.Web.csproj -c Release -o /appserver/out/web && \
+   dotnet publish RdtClient.Service/RdtClient.Service.csproj -c Release -o /appserver/out/service && \
+   dotnet publish RdtClient.Data/RdtClient.Data.csproj -c Release -o /appserver/out/data && \
+   ls -la /appserver/out/web  # Debug to confirm the DLL is here
 
 # Stage 3 - Build runtime image
-FROM alpine:3.18
+FROM alpine:3.20
 
 RUN apk add --no-cache bash icu-libs krb5-libs libgcc libintl libssl3 libstdc++ zlib curl
 
@@ -39,32 +41,24 @@ RUN mkdir -p /usr/share/dotnet && \
 
 ENV PATH "$PATH:/usr/share/dotnet"
 
-# Create the /config directory
-RUN mkdir -p /config/downloads /config/db
+# Create the /config and /data directories
+RUN mkdir -p /config/downloads /config/db /data && \
+    chown -R nobody:nogroup /config /data
 
 WORKDIR /config/app
 
 # Copy backend output
-COPY --from=dotnet-build-env /appserver/out /config/app
+COPY --from=dotnet-build-env /appserver/out/web /config/app
+COPY --from=dotnet-build-env /appserver/out/service /config/app
+COPY --from=dotnet-build-env /appserver/out/data /config/app
 
 # Copy frontend output
 COPY --from=node-build-env /appclient/client/out /config/app/wwwroot
 
-# Ensure the permissions are correct
-RUN chown -R 1000:1000 /config && chmod -R 770 /config
-
-# Add a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# Switch to non-root user
-USER appuser
+USER nobody:nogroup
 
 # Use /config/app for the .dll entry point
-ENTRYPOINT ["dotnet", "/config/app/RdtClient.dll"]
+ENTRYPOINT ["dotnet", "/config/app/RdtClient.Web.dll"]
 
 # ports and volumes
 EXPOSE 6500
-VOLUME [ "/config" ]
-
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD curl --fail http://localhost:6500 || exit 1
